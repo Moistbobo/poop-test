@@ -1,92 +1,109 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { IntroScreen } from "./components/IntroScreen";
 import { QuestionCard } from "./components/QuestionCard";
 import { ProgressBar } from "./components/ProgressBar";
 import { ResultCard } from "./components/ResultCard";
 import { questions } from "./data/questions";
 import { stoolTypes } from "./data/stoolTypes";
-import { addScores, findWinningType, subtractScores, ZERO_SCORE } from "./utils/scoring";
+import { addScores, findWinningType, sumAnswers, ZERO_SCORE } from "./utils/scoring";
 import type { Screen, ScoreVector } from "./types/quiz";
+
+type HistoryState =
+  | { screen: "intro" }
+  | { screen: "quiz"; index: number }
+  | { screen: "result" };
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("intro");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [scores, setScores] = useState<ScoreVector>(ZERO_SCORE);
-
-  const screenRef = useRef(screen);
-  const currentIndexRef = useRef(currentIndex);
-  const scoresRef = useRef(scores);
-
-  useEffect(() => {
-    screenRef.current = screen;
-  }, [screen]);
-
-  useEffect(() => {
-    currentIndexRef.current = currentIndex;
-  }, [currentIndex]);
-
-  useEffect(() => {
-    scoresRef.current = scores;
-  }, [scores]);
+  const [answers, setAnswers] = useState<Partial<ScoreVector>[]>(
+    () => Array.from({ length: questions.length }, () => ({}))
+  );
 
   const totalQuestions = questions.length;
 
-  function startQuiz() {
-    setScreen("quiz");
+  function resetQuiz() {
     setCurrentIndex(0);
     setScores(ZERO_SCORE);
+    setAnswers(Array(totalQuestions).fill(undefined));
+  }
+
+  function startQuiz() {
+    resetQuiz();
+    setScreen("quiz");
+    window.history.pushState(
+      { screen: "quiz", index: 0 },
+      "",
+      "#question-1"
+    );
   }
 
   function handleAnswer(answerScores: Partial<ScoreVector>) {
+    const nextAnswers = [...answers];
+    nextAnswers[currentIndex] = answerScores;
+    setAnswers(nextAnswers);
+
     const nextScores = addScores(scores, answerScores);
     setScores(nextScores);
 
     if (currentIndex + 1 < totalQuestions) {
-      setCurrentIndex((prev) => prev + 1);
+      const nextIndex = currentIndex + 1;
+      setCurrentIndex(nextIndex);
+      window.history.pushState(
+        { screen: "quiz", index: nextIndex },
+        "",
+        `#question-${nextIndex + 1}`
+      );
     } else {
       setScreen("result");
+      window.history.pushState({ screen: "result" }, "", "#result");
     }
   }
 
   function restartQuiz() {
+    resetQuiz();
     setScreen("intro");
-    setCurrentIndex(0);
-    setScores(ZERO_SCORE);
+  }
+
+  function goToIntro() {
+    resetQuiz();
+    setScreen("intro");
+  }
+
+  function goToQuestion(index: number) {
+    setCurrentIndex(index);
+    setScores(
+      sumAnswers(answers.slice(0, index + 1).filter(Boolean))
+    );
+    setScreen("quiz");
+  }
+
+  function goToResult() {
+    setScores(sumAnswers(answers));
+    setScreen("result");
   }
 
   useEffect(() => {
-    if (screen !== "quiz") return;
-
-    // Push a history entry for the current question so the back button can
-    // navigate backward within the quiz before leaving the page.
-    const key = `question-${currentIndex}`;
-    window.history.replaceState({ screen: "quiz", index: currentIndex }, "", "");
-    window.history.pushState({ screen: "quiz", index: currentIndex }, "", "#" + key);
+    // Mark the initial page load as the intro state without adding a history
+    // entry. All navigation is pushed from user actions.
+    window.history.replaceState({ screen: "intro" }, "", window.location.href);
 
     const handlePopState = (event: PopStateEvent) => {
-      const state = event.state as { screen?: Screen; index?: number } | null;
+      const state = (event.state ?? { screen: "intro" }) as HistoryState;
 
-      // If the user is backing out from the quiz and there is no earlier quiz
-      // state to return to, allow the browser to leave the page normally.
-      if (!state || state.screen !== "quiz" || typeof state.index !== "number") {
+      if (state.screen === "intro") {
+        goToIntro();
         return;
       }
 
-      const previousIndex = state.index;
-      const currentIdx = currentIndexRef.current;
+      if (state.screen === "quiz" && typeof state.index === "number") {
+        goToQuestion(state.index);
+        return;
+      }
 
-      if (previousIndex < currentIdx) {
-        // Recompute scores by removing the answer for the current question.
-        const currentQuestion = questions[currentIdx];
-        const totalSubtraction: Partial<ScoreVector> = {};
-        for (const answer of currentQuestion.answers) {
-          for (const key of Object.keys(answer.scores) as (keyof ScoreVector)[]) {
-            totalSubtraction[key] =
-              (totalSubtraction[key] ?? 0) + (answer.scores[key] ?? 0);
-          }
-        }
-        setScores(subtractScores(scoresRef.current, totalSubtraction));
-        setCurrentIndex(previousIndex);
+      if (state.screen === "result") {
+        goToResult();
       }
     };
 
@@ -94,7 +111,8 @@ export default function App() {
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [screen, currentIndex, totalQuestions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const winningTypeId = findWinningType(scores);
   const result = stoolTypes.find((stool) => stool.id === winningTypeId)!;

@@ -31,15 +31,13 @@ export function addScores(
   return next;
 }
 
-export function subtractScores(
-  current: ScoreVector,
-  subtraction: Partial<ScoreVector>
+export function sumAnswers(
+  answers: Partial<ScoreVector>[]
 ): ScoreVector {
-  const next: ScoreVector = { ...current };
-  for (const key of BRISTOL_ORDER) {
-    next[key] -= subtraction[key] ?? 0;
-  }
-  return next;
+  return answers.reduce<ScoreVector>(
+    (total, answer) => addScores(total, answer),
+    ZERO_SCORE
+  );
 }
 
 export function findWinningType(scores: ScoreVector): BristolType {
