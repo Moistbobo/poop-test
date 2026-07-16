@@ -17,8 +17,8 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("intro");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [scores, setScores] = useState<ScoreVector>(ZERO_SCORE);
-  const [answers, setAnswers] = useState<Partial<ScoreVector>[]>(
-    () => Array.from({ length: questions.length }, () => ({}))
+  const [answers, setAnswers] = useState<(Partial<ScoreVector> | undefined)[]>(
+    () => Array.from({ length: questions.length }, () => undefined)
   );
 
   const totalQuestions = questions.length;
@@ -26,7 +26,7 @@ export default function App() {
   function resetQuiz() {
     setCurrentIndex(0);
     setScores(ZERO_SCORE);
-    setAnswers(Array(totalQuestions).fill(undefined));
+    setAnswers(Array.from({ length: totalQuestions }, () => undefined));
   }
 
   function startQuiz() {
@@ -74,13 +74,23 @@ export default function App() {
   function goToQuestion(index: number) {
     setCurrentIndex(index);
     setScores(
-      sumAnswers(answers.slice(0, index + 1).filter(Boolean))
+      sumAnswers(
+        answers
+          .slice(0, index + 1)
+          .filter((answer): answer is Partial<ScoreVector> => answer !== undefined)
+      )
     );
     setScreen("quiz");
   }
 
   function goToResult() {
-    setScores(sumAnswers(answers));
+    setScores(
+      sumAnswers(
+        answers.filter(
+          (answer): answer is Partial<ScoreVector> => answer !== undefined
+        )
+      )
+    );
     setScreen("result");
   }
 
@@ -130,9 +140,11 @@ export default function App() {
 
         {screen === "quiz" && (
           <QuestionCard
+            key={currentIndex}
             question={questions[currentIndex]}
             current={currentIndex + 1}
             total={totalQuestions}
+            selectedAnswer={answers[currentIndex]}
             onAnswer={handleAnswer}
           />
         )}

@@ -1,16 +1,26 @@
+import { formatScoreVector } from "../utils/scoring";
 import type { Question, ScoreVector } from "../types/quiz";
 
 interface QuestionCardProps {
   question: Question;
   current: number;
   total: number;
+  selectedAnswer: Partial<ScoreVector> | undefined;
   onAnswer: (scores: Partial<ScoreVector>) => void;
+}
+
+function isSameScoreVector(
+  a: Partial<ScoreVector>,
+  b: Partial<ScoreVector>
+): boolean {
+  return formatScoreVector(a) === formatScoreVector(b);
 }
 
 export function QuestionCard({
   question,
   current,
   total,
+  selectedAnswer,
   onAnswer,
 }: QuestionCardProps) {
   return (
@@ -26,16 +36,25 @@ export function QuestionCard({
       </h2>
 
       <div className="grid grid-cols-1 gap-4">
-        {question.answers.map((answer, index) => (
-          <button
-            key={index}
-            type="button"
-            onClick={() => onAnswer(answer.scores)}
-            className="text-left px-6 py-5 rounded-xl border-2 border-poop-200 bg-white text-poop-700 font-medium hover:border-poop-400 hover:bg-poop-50 active:bg-poop-100 transition-colors focus:outline-none focus:ring-2 focus:ring-poop-400 focus:ring-offset-2"
-          >
-            {answer.text}
-          </button>
-        ))}
+        {question.answers.map((answer, index) => {
+          const isSelected =
+            selectedAnswer && isSameScoreVector(selectedAnswer, answer.scores);
+          return (
+            <button
+              key={index}
+              type="button"
+              onClick={() => onAnswer(answer.scores)}
+              className={[
+                "text-left px-6 py-5 rounded-xl border-2 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-poop-400 focus:ring-offset-2",
+                isSelected
+                  ? "border-poop-500 bg-poop-100 text-poop-800"
+                  : "border-poop-200 bg-white text-poop-700 hover:border-poop-400 hover:bg-poop-50 active:bg-poop-100",
+              ].join(" ")}
+            >
+              {answer.text}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

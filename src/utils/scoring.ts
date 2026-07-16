@@ -40,6 +40,13 @@ export function sumAnswers(
   );
 }
 
+export function formatScoreVector(score: Partial<ScoreVector>): string {
+  return Object.entries(score)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}:${value}`)
+    .join(",");
+}
+
 export function findWinningType(scores: ScoreVector): BristolType {
   const entries = BRISTOL_ORDER.map((key) => [key, scores[key]] as const);
   const maxScore = Math.max(...entries.map(([, score]) => score));
