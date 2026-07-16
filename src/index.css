@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --text: #4a3f35;
+  --text-h: #2a211b;
+  --bg: #fffaf4;
+  --surface: #ffffff;
+  --border: #ead3b8;
+  --accent: #bc6f3e;
+  --accent-bg: rgba(188, 111, 62, 0.12);
+
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
