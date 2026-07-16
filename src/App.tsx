@@ -1,17 +1,33 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IntroScreen } from "./components/IntroScreen";
 import { QuestionCard } from "./components/QuestionCard";
 import { ProgressBar } from "./components/ProgressBar";
 import { ResultCard } from "./components/ResultCard";
 import { questions } from "./data/questions";
 import { stoolTypes } from "./data/stoolTypes";
-import { addScores, findWinningType, ZERO_SCORE } from "./utils/scoring";
+import { addScores, findWinningType, subtractScores, ZERO_SCORE } from "./utils/scoring";
 import type { Screen, ScoreVector } from "./types/quiz";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("intro");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [scores, setScores] = useState<ScoreVector>(ZERO_SCORE);
+
+  const screenRef = useRef(screen);
+  const currentIndexRef = useRef(currentIndex);
+  const scoresRef = useRef(scores);
+
+  useEffect(() => {
+    screenRef.current = screen;
+  }, [screen]);
+
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  useEffect(() => {
+    scoresRef.current = scores;
+  }, [scores]);
 
   const totalQuestions = questions.length;
 
@@ -38,6 +54,48 @@ export default function App() {
     setScores(ZERO_SCORE);
   }
 
+  useEffect(() => {
+    if (screen !== "quiz") return;
+
+    // Push a history entry for the current question so the back button can
+    // navigate backward within the quiz before leaving the page.
+    const key = `question-${currentIndex}`;
+    window.history.replaceState({ screen: "quiz", index: currentIndex }, "", "");
+    window.history.pushState({ screen: "quiz", index: currentIndex }, "", "#" + key);
+
+    const handlePopState = (event: PopStateEvent) => {
+      const state = event.state as { screen?: Screen; index?: number } | null;
+
+      // If the user is backing out from the quiz and there is no earlier quiz
+      // state to return to, allow the browser to leave the page normally.
+      if (!state || state.screen !== "quiz" || typeof state.index !== "number") {
+        return;
+      }
+
+      const previousIndex = state.index;
+      const currentIdx = currentIndexRef.current;
+
+      if (previousIndex < currentIdx) {
+        // Recompute scores by removing the answer for the current question.
+        const currentQuestion = questions[currentIdx];
+        const totalSubtraction: Partial<ScoreVector> = {};
+        for (const answer of currentQuestion.answers) {
+          for (const key of Object.keys(answer.scores) as (keyof ScoreVector)[]) {
+            totalSubtraction[key] =
+              (totalSubtraction[key] ?? 0) + (answer.scores[key] ?? 0);
+          }
+        }
+        setScores(subtractScores(scoresRef.current, totalSubtraction));
+        setCurrentIndex(previousIndex);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [screen, currentIndex, totalQuestions]);
+
   const winningTypeId = findWinningType(scores);
   const result = stoolTypes.find((stool) => stool.id === winningTypeId)!;
 
@@ -61,7 +119,9 @@ export default function App() {
           />
         )}
 
-        {screen === "result" && <ResultCard result={result} onRestart={restartQuiz} />}
+        {screen === "result" && (
+          <ResultCard result={result} onRestart={restartQuiz} />
+        )}
       </main>
 
       <footer className="w-full text-center py-6 text-sm text-poop-400">

@@ -31,6 +31,17 @@ export function addScores(
   return next;
 }
 
+export function subtractScores(
+  current: ScoreVector,
+  subtraction: Partial<ScoreVector>
+): ScoreVector {
+  const next: ScoreVector = { ...current };
+  for (const key of BRISTOL_ORDER) {
+    next[key] -= subtraction[key] ?? 0;
+  }
+  return next;
+}
+
 export function findWinningType(scores: ScoreVector): BristolType {
   const entries = BRISTOL_ORDER.map((key) => [key, scores[key]] as const);
   const maxScore = Math.max(...entries.map(([, score]) => score));
