@@ -1,32 +1,35 @@
-# React + TypeScript + Vite
+# Poop Personality Test
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+10 playful questions. One scientifically questionable result. Discover which Bristol stool type matches your inner vibe.
 
-Currently, two official plugins are available:
+Built with React 19, TypeScript, Vite, and Tailwind CSS.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Getting Started
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+## Scripts
+
+| Command           | Description                    |
+| ----------------- | ------------------------------ |
+| `npm run dev`     | Start the dev server           |
+| `npm run build`   | Type-check and build for prod  |
+| `npm run preview` | Preview the production build   |
+| `npm run lint`    | Run Oxlint                     |
+
+## Stack
+
+- **React 19** with the Vite React plugin (Oxc)
+- **TypeScript** (strict mode)
+- **Tailwind CSS** for styling
+- **Oxlint** for linting
+- **Vite** for bundling and HMR
+
+## Deployment
+
+Deployed on Vercel at [poop.googoogaagaa.club](https://poop.googoogaagaa.club/).
