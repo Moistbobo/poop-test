@@ -2,6 +2,8 @@ import { useState } from "react";
 import { StoolSvg } from "./StoolSvg";
 import type { StoolTypeInfo } from "../types/quiz";
 
+const SITE_URL = "https://poop.googoogaagaa.club/";
+
 interface ResultCardProps {
   result: StoolTypeInfo;
   onRestart: () => void;
@@ -10,7 +12,7 @@ interface ResultCardProps {
 export function ResultCard({ result, onRestart }: ResultCardProps) {
   const [copied, setCopied] = useState(false);
 
-  const shareText = `I took the Poop Personality Test and I'm ${result.name} (${result.number} on the Bristol chart). Take it too and find out your type!`;
+  const shareText = `I took the Poop Personality Test and I'm ${result.name} (Type ${result.number} on the Bristol chart).\n\nFind out your type: ${SITE_URL}`;
 
   async function handleShare() {
     try {
